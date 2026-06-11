@@ -11,8 +11,6 @@
         />
       </n-space>
     </n-card>
-    <n-message-provider />
-    <n-notification-provider />
   </div>
 </template>
 
@@ -20,7 +18,7 @@
 import { ref, onMounted, h } from 'vue'
 import { useMessage, useNotification, NTag, NButton } from 'naive-ui'
 import { Copy as CopyIcon, Trash as TrashIcon } from '@vicons/ionicons5'
-import { api } from '@/api'
+import { ApiError, api } from '@/api'
 import type { PackageItem } from '@/api'
 
 const message = useMessage()
@@ -87,13 +85,27 @@ function copyToClipboard(text: string) {
   })
 }
 
+function showRequestError(e: unknown, fallback: string) {
+  if (e instanceof ApiError && e.status === 401) {
+    message.error('管理 Token 无效或未填写')
+    return
+  }
+
+  if (e instanceof ApiError && e.message === 'ADMIN_TOKEN is not configured') {
+    message.error('服务端未配置管理 Token')
+    return
+  }
+
+  message.error(fallback)
+}
+
 async function loadPackages() {
   loading.value = true
   try {
     const result = await api.getPackages()
     packages.value = result.packages
   } catch (e) {
-    message.error('加载失败')
+    showRequestError(e, '加载失败')
   } finally {
     loading.value = false
   }
@@ -112,7 +124,7 @@ async function handleDelete(pkg: PackageItem) {
     })
     await loadPackages()
   } catch (e) {
-    message.error('删除失败')
+    showRequestError(e, '删除失败')
   }
 }
 

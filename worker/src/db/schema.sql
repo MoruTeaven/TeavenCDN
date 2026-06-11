@@ -13,4 +13,5 @@ CREATE TABLE IF NOT EXISTS packages (
 
 CREATE INDEX IF NOT EXISTS idx_packages_name ON packages(name);
 CREATE INDEX IF NOT EXISTS idx_packages_version ON packages(version);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_packages_name_version ON packages(name, version);
 CREATE INDEX IF NOT EXISTS idx_packages_created_at ON packages(created_at DESC);

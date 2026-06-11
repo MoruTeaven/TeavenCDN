@@ -1,19 +1,26 @@
 import { Hono } from 'hono'
+import { requireAdmin } from '../middleware/auth'
+import { withCdnUrls, type PackageRecord } from '../utils/cdn'
 
 interface Env {
   DB: D1Database
   R2_BUCKET: R2Bucket
   CDN_DOMAIN: string
   GLOBAL_CDN_DOMAIN: string
+  ADMIN_TOKEN?: string
 }
 
 const app = new Hono<{ Bindings: Env }>()
+
+app.use('*', requireAdmin)
 
 app.get('/', async (c) => {
   const { results } = await c.env.DB.prepare(
     'SELECT * FROM packages ORDER BY created_at DESC'
   ).all()
-  return c.json({ packages: results })
+  return c.json({
+    packages: (results as PackageRecord[]).map(pkg => withCdnUrls(pkg, c.env))
+  })
 })
 
 app.delete('/:id', async (c) => {

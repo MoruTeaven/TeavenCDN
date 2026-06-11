@@ -9,11 +9,32 @@ interface Env {
   R2_BUCKET: R2Bucket
   CDN_DOMAIN: string
   GLOBAL_CDN_DOMAIN: string
+  CORS_ORIGIN?: string
+  ADMIN_TOKEN?: string
 }
 
 const app = new Hono<{ Bindings: Env }>()
 
-app.use('*', cors())
+function getAllowedOrigins(value?: string) {
+  return (value || 'http://localhost:5173')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean)
+}
+
+app.use('*', cors({
+  origin: (origin, c) => {
+    if (!origin) {
+      return null
+    }
+
+    const allowedOrigins = getAllowedOrigins(c.env.CORS_ORIGIN)
+    return allowedOrigins.includes(origin) ? origin : null
+  },
+  allowHeaders: ['Content-Type', 'Authorization'],
+  allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  maxAge: 86400
+}))
 
 app.route('/api/search', searchRoute)
 app.route('/api/favorite', favoriteRoute)

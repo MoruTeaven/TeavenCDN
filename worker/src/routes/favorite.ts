@@ -1,5 +1,7 @@
 import { Hono } from 'hono'
-import { searchPackages, getPackageVersion, getFileUrl } from '../services/jsdelivr'
+import { getPackageVersion, getFileUrl } from '../services/jsdelivr'
+import { requireAdmin } from '../middleware/auth'
+import { withCdnUrls, type PackageRecord } from '../utils/cdn'
 import { findEntryFile } from '../utils/matcher'
 
 interface Env {
@@ -7,9 +9,12 @@ interface Env {
   R2_BUCKET: R2Bucket
   CDN_DOMAIN: string
   GLOBAL_CDN_DOMAIN: string
+  ADMIN_TOKEN?: string
 }
 
 const app = new Hono<{ Bindings: Env }>()
+
+app.use('*', requireAdmin)
 
 app.post('/', async (c) => {
   const body = await c.req.json()
@@ -26,11 +31,7 @@ app.post('/', async (c) => {
   if (existing) {
     return c.json({
       error: 'Package already exists',
-      package: {
-        ...existing,
-        cdn_url: `https://${c.env.CDN_DOMAIN}${existing.file_path}`,
-        global_cdn_url: `https://${c.env.GLOBAL_CDN_DOMAIN}${existing.file_path}`
-      }
+      package: withCdnUrls(existing as PackageRecord, c.env)
     }, 409)
   }
 
@@ -63,7 +64,7 @@ app.post('/', async (c) => {
     })
 
     const result = await c.env.DB.prepare(
-      'INSERT INTO packages (name, version, file_name, file_path, source_url, source_type, file_size, content_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *'
+      'INSERT OR IGNORE INTO packages (name, version, file_name, file_path, source_url, source_type, file_size, content_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *'
     ).bind(
       name,
       version,
@@ -75,15 +76,26 @@ app.post('/', async (c) => {
       contentType
     ).run()
 
-    const inserted = (result.results as any[])[0]
+    const inserted = (result.results as PackageRecord[] | undefined)?.[0]
+
+    if (!inserted) {
+      const duplicate = await c.env.DB.prepare(
+        'SELECT * FROM packages WHERE name = ? AND version = ?'
+      ).bind(name, version).first()
+
+      if (duplicate) {
+        return c.json({
+          error: 'Package already exists',
+          package: withCdnUrls(duplicate as PackageRecord, c.env)
+        }, 409)
+      }
+
+      return c.json({ error: 'Failed to save package' }, 500)
+    }
 
     return c.json({
       success: true,
-      package: {
-        ...inserted,
-        cdn_url: `https://${c.env.CDN_DOMAIN}${filePath}`,
-        global_cdn_url: `https://${c.env.GLOBAL_CDN_DOMAIN}${filePath}`
-      }
+      package: withCdnUrls(inserted, c.env)
     })
   } catch (e) {
     return c.json({ error: 'Failed to favorite package' }, 500)

@@ -40,6 +40,24 @@ npm run db:migrate
 
 在 `worker/wrangler.toml` 中修改 `CDN_DOMAIN` 和 `GLOBAL_CDN_DOMAIN` 为你的域名。
 
+同时将 `CORS_ORIGIN` 改为前端站点地址。多个地址用英文逗号分隔，例如：
+
+```toml
+CORS_ORIGIN = "https://cdn.example.com,http://localhost:5173"
+```
+
+配置管理接口 Token：
+
+```bash
+npx wrangler secret put ADMIN_TOKEN
+```
+
+本地开发可在 `worker/.dev.vars` 中设置：
+
+```dotenv
+ADMIN_TOKEN=your-local-token
+```
+
 ### 6. 部署 Worker
 
 ```bash

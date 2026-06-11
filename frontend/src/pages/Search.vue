@@ -33,9 +33,6 @@
       </n-space>
       </n-card>
     </div>
-
-    <n-notification-provider />
-    <n-message-provider />
     </n-card>
   </div>
 </template>
@@ -43,7 +40,7 @@
 <script setup lang="ts">
 import { ref, h } from 'vue'
 import { useMessage, useNotification } from 'naive-ui'
-import { api } from '@/api'
+import { ApiError, api } from '@/api'
 import type { SearchResult } from '@/api'
 import { Search as SearchIcon } from '@vicons/ionicons5'
 
@@ -85,13 +82,15 @@ async function handleFavorite() {
       content: `已成功收藏 ${result.package.name}@${result.package.version}`,
       duration: 3000
     })
-  } catch (e: any) {
-    if (e.message.includes('409')) {
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 409) {
       notification.warning({
         title: '已收藏',
         content: '该资源已在您的 CDN 中',
         duration: 3000
       })
+    } else if (e instanceof ApiError && e.status === 401) {
+      message.error('管理 Token 无效或未填写')
     } else {
       message.error('收藏失败')
     }
