@@ -15,3 +15,14 @@ CREATE INDEX IF NOT EXISTS idx_packages_name ON packages(name);
 CREATE INDEX IF NOT EXISTS idx_packages_version ON packages(version);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_packages_name_version ON packages(name, version);
 CREATE INDEX IF NOT EXISTS idx_packages_created_at ON packages(created_at DESC);
+
+CREATE TABLE IF NOT EXISTS logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  action TEXT NOT NULL,
+  target TEXT NOT NULL,
+  detail TEXT,
+  status TEXT DEFAULT 'success',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at DESC);

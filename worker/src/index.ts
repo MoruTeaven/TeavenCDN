@@ -3,6 +3,8 @@ import { cors } from 'hono/cors'
 import searchRoute from './routes/search'
 import favoriteRoute from './routes/favorite'
 import packagesRoute from './routes/packages'
+import logsRoute from './routes/logs'
+import statsRoute from './routes/stats'
 
 interface Env {
   DB: D1Database
@@ -39,6 +41,8 @@ app.use('*', cors({
 app.route('/api/search', searchRoute)
 app.route('/api/favorite', favoriteRoute)
 app.route('/api/packages', packagesRoute)
+app.route('/api/logs', logsRoute)
+app.route('/api/stats', statsRoute)
 
 app.get('/health', (c) => {
   return c.json({ status: 'ok' })

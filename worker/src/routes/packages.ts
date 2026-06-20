@@ -33,11 +33,18 @@ app.delete('/:id', async (c) => {
     return c.json({ error: 'Package not found' }, 404)
   }
 
+  const pkgName = pkg.name as string
+  const pkgVersion = pkg.version as string
+
   await c.env.R2_BUCKET.delete(pkg.file_path as string)
 
   await c.env.DB.prepare(
     'DELETE FROM packages WHERE id = ?'
   ).bind(id).run()
+
+  await c.env.DB.prepare(
+    "INSERT INTO logs (action, target, detail, status) VALUES (?, ?, ?, ?)"
+  ).bind('delete', `${pkgName}@${pkgVersion}`, `删除 ${pkgName}@${pkgVersion} 成功`, 'success').run()
 
   return c.json({ success: true })
 })

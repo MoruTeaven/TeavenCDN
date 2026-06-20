@@ -93,6 +93,10 @@ app.post('/', async (c) => {
       return c.json({ error: 'Failed to save package' }, 500)
     }
 
+    await c.env.DB.prepare(
+      "INSERT INTO logs (action, target, detail, status) VALUES (?, ?, ?, ?)"
+    ).bind('add', `${name}@${version}`, `转存 ${name}@${version} 成功`, 'success').run()
+
     return c.json({
       success: true,
       package: withCdnUrls(inserted, c.env)
