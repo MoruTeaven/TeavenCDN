@@ -420,6 +420,92 @@
         .nowrap { white-space: nowrap; }
         .hidden { display: none !important; }
 
+        .login-page {
+            display: flex;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: radial-gradient(circle at 30% 20%, rgba(var(--primary-rgb), 0.10), transparent 50%), var(--bg);
+        }
+        .login-page.hidden { display: none !important; }
+        .login-shell {
+            width: 100%;
+            max-width: 440px;
+            animation: modalIn 280ms var(--ease);
+        }
+        .login-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+            justify-content: center;
+        }
+        .login-brand .brand-mark { width: 48px; height: 48px; flex: 0 0 48px; font-size: 22px; border-radius: 16px; }
+        .login-brand .brand-title { font-size: 22px; }
+        .login-brand .brand-subtitle { font-size: 12px; }
+        .login-card {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            background: var(--surface);
+            backdrop-filter: blur(18px);
+            box-shadow: var(--shadow-lg);
+            padding: 32px;
+        }
+        .login-card h2 {
+            margin: 0 0 4px;
+            color: var(--heading);
+            font-size: 22px;
+            font-weight: 950;
+            letter-spacing: -0.04em;
+            text-align: center;
+        }
+        .login-card .login-subtitle {
+            margin: 0 0 28px;
+            color: var(--muted);
+            font-size: 14px;
+            text-align: center;
+        }
+        .login-card .form-field { margin-bottom: 18px; }
+        .login-card .form-field.full { grid-column: 1; }
+        .login-card .btn.primary {
+            width: 100%;
+            min-height: 44px;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        .login-footer {
+            margin-top: 20px;
+            text-align: center;
+            color: var(--faint);
+            font-size: 12px;
+        }
+        .login-footer a {
+            color: var(--primary);
+            font-weight: 800;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .login-footer a:hover { text-decoration: underline; }
+        .login-error {
+            display: none;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px;
+            margin-bottom: 18px;
+            border: 1px solid rgba(var(--error-rgb), 0.22);
+            border-radius: 14px;
+            background: rgba(var(--error-rgb), 0.06);
+            color: var(--error);
+            font-size: 13px;
+        }
+        .login-error.show { display: flex; }
+        .login-theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
         @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
         @keyframes popIn { from { opacity: 0; transform: translateY(-6px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
         @keyframes modalIn { from { opacity: 0; transform: translate(-50%, -48%) scale(0.98); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
@@ -460,7 +546,40 @@
     </style>
 </head>
 <body>
-    <div class="app-shell" id="appShell">
+    <button class="icon-btn tooltip login-theme-toggle" type="button" id="loginThemeToggle" data-action="toggle-theme" data-tooltip="切换明暗模式" aria-label="切换明暗模式"><i class="ri-moon-line" aria-hidden="true"></i></button>
+
+    <div class="login-page hidden" id="loginPage">
+        <div class="login-shell">
+            <div class="login-brand">
+                <div class="brand-mark" aria-hidden="true">T</div>
+                <div class="brand-copy">
+                    <span class="brand-title">TeavenCDN</span>
+                    <span class="brand-subtitle">Worker Console</span>
+                </div>
+            </div>
+            <div class="login-card">
+                <h2>管理员认证</h2>
+                <p class="login-subtitle">Admin Authentication</p>
+                <div class="login-error" id="loginError">
+                    <i class="ri-error-warning-line" aria-hidden="true" style="flex-shrink:0;margin-top:1px"></i>
+                    <span id="loginErrorText">Token 验证失败</span>
+                </div>
+                <label class="form-field full">
+                    <span class="form-label">ADMIN_TOKEN <span class="required">*</span></span>
+                    <input class="input" id="loginTokenInput" type="password" placeholder="输入 Cloudflare Worker 环境变量 ADMIN_TOKEN" autocomplete="off" style="height:44px">
+                    <p class="help-text">Token 仅保存在浏览器 localStorage，用于调用受保护管理接口。</p>
+                </label>
+                <button class="btn primary" type="button" data-action="login-submit" id="loginSubmitBtn">
+                    <i class="ri-login-box-line" aria-hidden="true"></i>验证并登录
+                </button>
+                <div class="login-footer">
+                    <a data-action="login-skip">跳过，先浏览公开页面</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-shell hidden" id="appShell">
         <aside class="sidebar" id="sidebar" aria-label="主导航">
             <div class="brand">
                 <div class="brand-mark" aria-hidden="true">T</div>
@@ -1228,7 +1347,7 @@
             const authStatus = !state.token ? '<span class="badge warning">未保存 Token</span>' : state.authError ? '<span class="badge error">接口未通过</span>' : '<span class="badge success">最近请求通过</span>';
 
             return `
-                ${pageHero('用户中心', 'Admin Session', '当前后端没有用户资料、角色、工单或财务接口，因此本页只展示真实的本地管理会话和 Worker API 状态。', `<button class="btn" type="button" data-action="refresh"><i class="ri-refresh-line" aria-hidden="true"></i>验证接口</button>`)}
+                ${pageHero('用户中心', 'Admin Session', '管理 ADMIN_TOKEN 认证凭据与会话状态。Token 验证通过后即可访问仪表盘、资源管理、日志等受保护模块。', `<button class="btn danger" type="button" data-action="logout"><i class="ri-logout-box-r-line" aria-hidden="true"></i>退出登录</button>`)}
                 <section class="grid grid-2">
                     <article class="card">
                         <div class="card-header"><div><h2 class="card-title">管理 Token</h2><div class="card-subtitle">localStorage.admin_token</div></div>${authStatus}</div>
@@ -1247,16 +1366,28 @@
                         </div>
                     </article>
                 </section>
-                <section class="card mt-16">
-                    ${emptyState('未展示用户资料样例', '当前项目没有用户表、权限表或用户资料 API。为了避免假数据，本页不会展示姓名、角色、头像、工单、账单等不存在的业务数据。')}
-                </section>
             `;
         }
 
         function renderPage(page = state.page) {
+            if (page !== 'account' && page !== 'login' && !requireAuth(page)) return;
+
             state.page = page;
             closeDropdowns();
             updateNavigation();
+
+            if (page === 'account') {
+                if (!$('#appShell').classList.contains('hidden')) {
+                    updateNavigation();
+                    renderAccount();
+                } else {
+                    showAdminShell();
+                    state.page = 'account';
+                    updateNavigation();
+                    renderAccount();
+                }
+                return;
+            }
 
             const renderers = { dashboard: renderDashboard, search: renderSearch, packages: renderPackages, logs: renderLogs, account: renderAccount };
             $('#mainContent').innerHTML = renderers[page]();
@@ -1290,14 +1421,109 @@
             document.documentElement.dataset.theme = theme;
             const icon = $('#themeToggle i');
             if (icon) icon.className = theme === 'dark' ? 'ri-sun-line' : 'ri-moon-line';
+            const loginIcon = $('#loginThemeToggle i');
+            if (loginIcon) loginIcon.className = theme === 'dark' ? 'ri-sun-line' : 'ri-moon-line';
         }
 
         function toggleTheme() {
             const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
             localStorage.setItem('teaven-theme', next);
             applyTheme(next);
-            showToast(next === 'dark' ? '已切换为深色模式' : '已切换为浅色模式', 'success');
+            if ($('#appShell') && !$('#appShell').classList.contains('hidden')) {
+                showToast(next === 'dark' ? '已切换为深色模式' : '已切换为浅色模式', 'success');
+            }
         }
+
+        function showLoginPage() {
+            $('#loginPage').classList.remove('hidden');
+            $('#appShell').classList.add('hidden');
+            state.page = 'login';
+            const input = $('#loginTokenInput');
+            if (input) {
+                input.value = state.token;
+                setTimeout(() => input.focus(), 100);
+            }
+        }
+
+        function showAdminShell() {
+            $('#loginPage').classList.add('hidden');
+            $('#appShell').classList.remove('hidden');
+        }
+
+        function requireAuth(page) {
+            const publicPages = ['account', 'login'];
+            if (!state.token && !publicPages.includes(page)) {
+                showLoginPage();
+                return false;
+            }
+            return true;
+        }
+
+        async function handleLogin() {
+            const input = $('#loginTokenInput');
+            const errorBox = $('#loginError');
+            const errorText = $('#loginErrorText');
+            const submitBtn = $('#loginSubmitBtn');
+            const token = input?.value.trim() || '';
+
+            if (!token) {
+                errorBox.classList.add('show');
+                errorText.textContent = '请输入管理 Token';
+                input?.focus();
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span> 验证中...';
+
+            try {
+                const headers = { Authorization: `Bearer ${token}` };
+                const response = await fetch('/api/stats', { headers });
+                if (!response.ok) {
+                    const payload = await response.json().catch(() => ({}));
+                    throw new Error(payload.error || `验证失败 (${response.status})`);
+                }
+                state.token = token;
+                localStorage.setItem('admin_token', token);
+                errorBox.classList.remove('show');
+                showAdminShell();
+                updateShellStatus();
+                renderPage('dashboard');
+                await refreshData({ quiet: false });
+                showToast('Token 验证通过，登录成功', 'success');
+            } catch (error) {
+                errorBox.classList.add('show');
+                errorText.textContent = error.message || 'Token 验证失败，请检查后重试';
+                input?.focus();
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="ri-login-box-line" aria-hidden="true"></i>验证并登录';
+            }
+        }
+
+        function handleSkipLogin() {
+            showAdminShell();
+            state.page = 'account';
+            updateNavigation();
+            $('#mainContent').innerHTML = renderAccount();
+            $('#mainContent').focus({ preventScroll: true });
+        }
+
+        function handleLogout() {
+            state.token = '';
+            localStorage.removeItem('admin_token');
+            state.stats = null;
+            state.packages = [];
+            state.logs = [];
+            state.logsTotal = 0;
+            state.authError = '';
+            showLoginPage();
+            showToast('已退出登录', 'warning');
+        }
+
+        const spinnerStyle = document.createElement('style');
+        spinnerStyle.textContent = '@keyframes spin{to{transform:rotate(360deg)}}.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}';
+        document.head.appendChild(spinnerStyle);
 
         async function searchPackage() {
             const input = $('#packageSearchInput');
@@ -1522,6 +1748,9 @@
             if (action === 'open-mobile-nav') { document.body.classList.add('nav-open'); $('#mobileBackdrop').classList.add('open'); }
             if (action === 'close-mobile-nav') { document.body.classList.remove('nav-open'); $('#mobileBackdrop').classList.remove('open'); }
             if (action === 'toggle-theme') toggleTheme();
+            if (action === 'login-submit') { await handleLogin(); return; }
+            if (action === 'login-skip') { handleSkipLogin(); return; }
+            if (action === 'logout') { handleLogout(); return; }
             if (action === 'refresh') await refreshData({ quiet: false });
             if (action === 'search-package') await searchPackage();
             if (action === 'favorite-package') await favoritePackage();
@@ -1530,8 +1759,15 @@
                 state.token = value;
                 if (value) localStorage.setItem('admin_token', value);
                 else localStorage.removeItem('admin_token');
-                showToast(value ? 'Token 已保存，正在验证' : 'Token 已清除', value ? 'success' : 'warning');
-                await refreshData({ quiet: false });
+                if (value) {
+                    showAdminShell();
+                    showToast('Token 已保存，正在验证', 'success');
+                    await refreshData({ quiet: false });
+                } else {
+                    showToast('Token 已清除', 'warning');
+                    updateShellStatus();
+                    renderPage('account');
+                }
             }
             if (action === 'clear-token') {
                 state.token = '';
@@ -1541,9 +1777,8 @@
                 state.logs = [];
                 state.logsTotal = 0;
                 state.authError = '';
-                updateShellStatus();
+                showLoginPage();
                 showToast('Token 已清除', 'warning');
-                renderPage('account');
             }
             if (action === 'open-package-detail') openPackageDetail(control.dataset.id);
             if (action === 'close-drawer') closeDrawer();
@@ -1630,14 +1865,24 @@
             if (event.key === 'Enter' && event.target.id === 'packageSearchInput') {
                 await searchPackage();
             }
+            if (event.key === 'Enter' && event.target.id === 'loginTokenInput') {
+                await handleLogin();
+            }
         });
 
         function init() {
             initTheme();
             if (localStorage.getItem('teaven-sidebar') === 'collapsed') $('#appShell').classList.add('sidebar-collapsed');
             updateShellStatus();
-            renderPage('dashboard');
-            refreshData({ quiet: true });
+            loadHealth();
+
+            if (!state.token) {
+                showLoginPage();
+            } else {
+                showAdminShell();
+                renderPage('dashboard');
+                refreshData({ quiet: true });
+            }
         }
 
         init();
