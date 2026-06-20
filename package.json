@@ -1,11 +1,12 @@
 {
-  "name": "cdn-manager-worker",
+  "name": "teaven-cdn",
   "version": "1.0.0",
-  "description": "CDN Manager Worker",
+  "description": "TeavenCDN single Cloudflare Worker app",
   "main": "src/index.ts",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
     "db:migrate": "wrangler d1 execute cdn-manager --file=./src/db/schema.sql",
     "db:create": "wrangler d1 create cdn-manager"
   },

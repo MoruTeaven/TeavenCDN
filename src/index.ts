@@ -5,6 +5,7 @@ import favoriteRoute from './routes/favorite'
 import packagesRoute from './routes/packages'
 import logsRoute from './routes/logs'
 import statsRoute from './routes/stats'
+import adminHtml from './pages/admin.html'
 
 interface Env {
   DB: D1Database
@@ -18,25 +19,34 @@ interface Env {
 const app = new Hono<{ Bindings: Env }>()
 
 function getAllowedOrigins(value?: string) {
-  return (value || 'http://localhost:5173')
+  return (value || '')
     .split(',')
     .map(origin => origin.trim())
     .filter(Boolean)
 }
 
-app.use('*', cors({
+app.use('/api/*', cors({
   origin: (origin, c) => {
     if (!origin) {
       return null
     }
 
     const allowedOrigins = getAllowedOrigins(c.env.CORS_ORIGIN)
+    if (allowedOrigins.length === 0) {
+      return origin
+    }
+
     return allowedOrigins.includes(origin) ? origin : null
   },
   allowHeaders: ['Content-Type', 'Authorization'],
   allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   maxAge: 86400
 }))
+
+app.get('/', (c) => c.html(adminHtml))
+app.get('/admin', (c) => c.html(adminHtml))
+app.get('/search', (c) => c.redirect('/admin'))
+app.get('/packages', (c) => c.redirect('/admin'))
 
 app.route('/api/search', searchRoute)
 app.route('/api/favorite', favoriteRoute)

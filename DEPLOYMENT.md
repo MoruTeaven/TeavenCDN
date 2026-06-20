@@ -12,7 +12,6 @@
 
 ```bash
 # 登录 Cloudflare
-cd worker
 npm install
 npx wrangler login
 ```
@@ -20,11 +19,10 @@ npx wrangler login
 ### 2. 创建 D1 数据库
 
 ```bash
-cd worker
 npm run db:create
 ```
 
-复制输出的数据库 ID，更新 `worker/wrangler.toml` 中的 `database_id`。
+复制输出的数据库 ID，更新 `wrangler.toml` 中的 `database_id`。
 
 ### 3. 初始化数据库表
 
@@ -38,12 +36,12 @@ npm run db:migrate
 
 ### 5. 配置域名
 
-在 `worker/wrangler.toml` 中修改 `CDN_DOMAIN` 和 `GLOBAL_CDN_DOMAIN` 为你的域名。
+在 `wrangler.toml` 中修改 `CDN_DOMAIN` 和 `GLOBAL_CDN_DOMAIN` 为你的域名。
 
-同时将 `CORS_ORIGIN` 改为前端站点地址。多个地址用英文逗号分隔，例如：
+同时将 `CORS_ORIGIN` 改为管理后台站点地址。多个地址用英文逗号分隔，例如：
 
 ```toml
-CORS_ORIGIN = "https://cdn.example.com,http://localhost:5173"
+CORS_ORIGIN = "https://cdn.example.com,http://localhost:8787"
 ```
 
 配置管理接口 Token：
@@ -52,7 +50,7 @@ CORS_ORIGIN = "https://cdn.example.com,http://localhost:5173"
 npx wrangler secret put ADMIN_TOKEN
 ```
 
-本地开发可在 `worker/.dev.vars` 中设置：
+本地开发可在 `.dev.vars` 中设置：
 
 ```dotenv
 ADMIN_TOKEN=your-local-token
@@ -64,27 +62,12 @@ ADMIN_TOKEN=your-local-token
 npm run deploy
 ```
 
-### 7. 部署前端
-
-```bash
-cd ../frontend
-npm run build
-```
-
-将 `dist` 目录部署到任意静态托管服务（如 Cloudflare Pages、GitHub Pages 等）。
+部署完成后访问 Worker 绑定的域名 `/admin`，例如 `https://cdn.example.com/admin`。
 
 ## 开发
 
-### 后端开发
-
 ```bash
-cd worker
 npm run dev
 ```
 
-### 前端开发
-
-```bash
-cd frontend
-npm run dev
-```
+本地访问 `http://localhost:8787/admin`。

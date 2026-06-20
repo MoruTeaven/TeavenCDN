@@ -1,6 +1,6 @@
 # TeavenCDN
 
-个人公共资源 CDN 收藏与管理系统，基于 Cloudflare Worker 构建。
+个人公共资源 CDN 收藏与管理系统，基于 Cloudflare Worker 构建。Worker 同时提供管理后台页面和 API，不再需要单独部署前端。
 
 ## 功能特性
 
@@ -13,39 +13,28 @@
 
 ## 技术栈
 
-### 后端
 - Cloudflare Worker
 - Hono（轻量级 Web 框架）
 - TypeScript
+- 原生 HTML/CSS/JavaScript 管理后台
 - Cloudflare R2（对象存储）
 - Cloudflare D1（数据库）
-
-### 前端
-- Vue 3
-- Vite
-- NaiveUI（UI 组件库）
-- Pinia（状态管理）
-- Vue Router（路由）
 
 ## 项目结构
 
 ```
 TeavenCDN/
-├── worker/             # Worker 后端
-│   ├── src/
-│   │   ├── routes/     # 路由
-│   │   ├── services/   # 服务层
-│   │   ├── utils/      # 工具函数
-│   │   ├── db/         # 数据库相关
-│   │   └── index.ts    # 入口文件
-│   └── wrangler.toml   # Worker 配置
-├── frontend/            # Vue 3 前端
-│   ├── src/
-│   │   ├── pages/      # 页面组件
-│   │   ├── router/     # 路由配置
-│   │   ├── api/        # API 封装
-│   │   └── main.ts     # 入口文件
-│   └── vite.config.ts  # Vite 配置
+├── src/
+│   ├── index.ts        # Worker 入口，页面 + API 路由
+│   ├── pages/          # 原生管理后台页面
+│   ├── routes/         # API 路由
+│   ├── services/       # 服务层
+│   ├── utils/          # 工具函数
+│   ├── middleware/     # 中间件
+│   └── db/             # 数据库相关
+├── package.json
+├── tsconfig.json
+├── wrangler.toml       # Worker 配置
 ├── README.md
 ├── DEPLOYMENT.md       # 部署指南
 ├── AGENTS.md           # 项目代理记录
@@ -56,21 +45,12 @@ TeavenCDN/
 
 ### 开发环境
 
-#### 后端开发
-
 ```bash
-cd worker
 npm install
 npm run dev
 ```
 
-#### 前端开发
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
+访问 `http://localhost:8787/admin` 打开管理后台。
 
 ### 部署
 
@@ -79,5 +59,4 @@ npm run dev
 ## License
 
 MIT
-
 
