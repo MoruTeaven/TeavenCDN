@@ -13,7 +13,7 @@ app.get('/', async (c) => {
     const latestVersion = pkg.tags?.latest || pkg.versions[0]
     return c.json({
       type: 'exact',
-      name: pkg.name,
+      name: q,
       versions: pkg.versions.slice(0, 20),
       latest: latestVersion
     })

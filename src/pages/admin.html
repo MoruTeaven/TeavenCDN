@@ -1619,6 +1619,7 @@
             const result = state.search.result;
             const versions = Array.isArray(result.versions) ? result.versions : [];
             const selected = state.search.version || result.latest || versions[0] || '';
+            
             return `
                 <div class="card">
                     <div class="card-header">
@@ -2237,8 +2238,10 @@
 
             try {
                 const result = await apiRequest(`/api/search?q=${encodeURIComponent(packageName)}`);
+                console.log('[selectFuzzy] API result:', JSON.stringify(result));
                 state.search.result = result;
                 state.search.version = result.latest || (Array.isArray(result.versions) ? result.versions[0] : '') || '';
+                console.log('[selectFuzzy] state.search.version:', state.search.version);
                 state.search.error = '';
                 await loadVersionDetail(false);
             } catch (error) {
@@ -2266,6 +2269,13 @@
             
             // 版本选择器的值是纯版本号（如"4.7.0"），不包含包名前缀
             const version = selectValue || state.search.version;
+            
+            console.log('[favorite] result:', JSON.stringify(result));
+            console.log('[favorite] selectEl:', selectEl);
+            console.log('[favorite] selectValue:', selectValue);
+            console.log('[favorite] state.search.version:', state.search.version);
+            console.log('[favorite] version:', version);
+            console.log('[favorite] result?.name:', result?.name);
             
             if (!result?.name || !version) {
                 showToast('缺少包名或版本', 'warning');
