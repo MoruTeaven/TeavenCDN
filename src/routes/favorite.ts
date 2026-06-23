@@ -40,7 +40,12 @@ app.post('/', async (c) => {
     const entryFile = findEntryFile(name, pkgVersion.files, pkgVersion.default)
 
     if (!entryFile) {
-      return c.json({ error: 'No entry file found' }, 400)
+      const fileList = pkgVersion.files.map(f => f.name).slice(0, 20)
+      return c.json({
+        error: 'No entry file found',
+        detail: `Checked ${pkgVersion.files.length} files for ${name}@${version}`,
+        files: fileList
+      }, 400)
     }
 
     const sourceUrl = getFileUrl(name, version, entryFile)
