@@ -17,25 +17,25 @@ const app = new Hono<{ Bindings: Env }>()
 app.use('*', requireAdmin)
 
 app.post('/', async (c) => {
-  const body = await c.req.json()
-  const { name, version } = body as { name: string, version: string }
-
-  if (!name || !version) {
-    return c.json({ error: 'Name and version are required' }, 400)
-  }
-
-  const existing = await c.env.DB.prepare(
-    'SELECT * FROM packages WHERE name = ? AND version = ?'
-  ).bind(name, version).first()
-
-  if (existing) {
-    return c.json({
-      error: 'Package already exists',
-      package: withCdnUrls(existing as PackageRecord, c.env)
-    }, 409)
-  }
-
   try {
+    const body = await c.req.json()
+    const { name, version } = body as { name: string, version: string }
+
+    if (!name || !version) {
+      return c.json({ error: 'Name and version are required' }, 400)
+    }
+
+    const existing = await c.env.DB.prepare(
+      'SELECT * FROM packages WHERE name = ? AND version = ?'
+    ).bind(name, version).first()
+
+    if (existing) {
+      return c.json({
+        error: 'Package already exists',
+        package: withCdnUrls(existing as PackageRecord, c.env)
+      }, 409)
+    }
+
     const pkgVersion = await getPackageVersion(name, version)
     const entryFile = findEntryFile(name, pkgVersion.files, pkgVersion.default)
 
